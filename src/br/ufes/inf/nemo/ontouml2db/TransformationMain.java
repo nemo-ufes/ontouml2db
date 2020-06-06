@@ -1,5 +1,5 @@
 /**
- * Transforms an OntoUML model into a model ready for final transformation into a relational schema.
+ * Transforms an OntoUML model into a model ready for final transformation and its corresponding into a relational schema.
  * 
  * The one table per kind approach is used; all non-sortals are flattened to kinds, and sortals lifted to kinds.
  * 
@@ -11,9 +11,13 @@
 
 package br.ufes.inf.nemo.ontouml2db;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,20 +43,22 @@ public class TransformationMain {
 	public static void main(String[] args) {
 
 		if (args.length < 1) {
-			System.out.println("usage: java br.ufes.inf.nemo.ontouml2db.TransformationMain source_file.uml [target_file.uml]");
-			System.out.println("when target_file.uml is omitted, default is 'output.uml'");
+			System.out.println(
+					"usage: java br.ufes.inf.nemo.ontouml2db.TransformationMain source_file.uml");
+			System.out.println("produced 'output.uml' and 'output.sql'");
 			return;
 		}
 
 		String filename = args[0];
 		String outputfilename = (args.length >= 2) ? args[1] : "output.uml";
+		String sqlOutputfilename = (args.length >= 3) ? args[2] : "output.sql";
 
 		File sourceFile = new File(filename);
 		if (!sourceFile.isFile()) {
 			System.out.println("Error accessing: " + sourceFile.getAbsolutePath());
 			System.exit(1);
 		}
-		
+
 		Resource resource;
 		ResourceSet resourceSet = new ResourceSetImpl();
 		UMLResourcesUtil.init(resourceSet);
@@ -64,10 +70,15 @@ public class TransformationMain {
 
 			Package p = (Package) resource.getContents().get(0);
 			handlePackage(p);
-
+			
 			File outputfile = new File(outputfilename);
 			resource.save(new FileOutputStream(outputfile), null);
-			System.out.println("Produced output.uml");
+			System.out.println("Produced "+outputfilename);
+
+			 BufferedWriter writer = new BufferedWriter(new FileWriter(sqlOutputfilename));
+			 writer.write(serializeDDL(p));    
+			 writer.close();
+			 System.out.println("Produced "+sqlOutputfilename);
 
 		} catch (Exception e) {
 			System.out.println("This is a research prototype, under development.");
@@ -80,6 +91,8 @@ public class TransformationMain {
 		System.out.println("Handling package " + p.getName());
 
 		// flattens all top-level non-sortals
+		// this is inefficient, because find restarts the search every time
+		// but the formulation is clear
 		org.eclipse.uml2.uml.Class topns = findToplevelNonSortal(p);
 		while (topns != null) {
 			flattenClass(p, topns);
@@ -96,12 +109,94 @@ public class TransformationMain {
 	}
 
 	/**
+	 * Creates a DDL specification that corresponds to the OntoUML model in a
+	 * package.
+	 * 
+	 * One table is generated for each kind in the model.
+	 * 
+	 * @param p package containing classes stereotyped with the OntoUML profile
+	 * @return string with the DDL specification corresponding to the OntoUML model
+	 */
+
+	private static String serializeDDL(Package p) {
+
+		// FIXME: trim any spaces in names
+		// FIXME: check for SQL reserved words
+		
+		Map<String, String> convertType = new HashMap<>();
+		// UML's primitive types
+		convertType.put("Integer", "INT");
+		convertType.put("Boolean", "BOOLEAN");
+		convertType.put("String", "VARCHAR(255)");
+		convertType.put("Real", "DOUBLE");
+		convertType.put("UnlimitedNatural", "DOUBLE");
+
+		String ddl = "";
+
+		// for each kind a table
+		for (PackageableElement e : p.getPackagedElements()) {
+			if ((e instanceof Class) && isKind((Class) e)) {
+				Class c = (Class) e;
+				String tableName = c.getName().toUpperCase();
+				String lowercaseName = c.getName().substring(0, 1).toLowerCase() + c.getName().substring(1);
+				String keyName = lowercaseName + "_id";
+				
+				ddl += "CREATE TABLE " + tableName + " (\n" + "	" + keyName + " INT NOT NULL PRIMARY KEY";
+				// a columns for each attribute that has upper bound != -1
+				String constraints = "";
+
+				for (Property property : c.getOwnedAttributes()) {
+					// only if upper bound != -1
+					// because if upper bound == -1, the column should be in the referenced table
+					if (property.getUpper() == -1)
+						continue;
+
+					String name = property.getName();
+					String notNull = (property.getLower() == 0) ? " NULL" : " NOT NULL";
+
+					if (convertType.containsKey(property.getType().getName())) {
+						// UML primitive types are mapped to pre-defined SQL types
+						ddl += ",\n	" + name + " " + convertType.get(property.getType().getName())
+								+ notNull;
+					} else {
+						if (property.getType() instanceof Enumeration) {
+							// enumeration is treated differently
+							Enumeration enumeration = (Enumeration) property.getType();
+							ddl += ",\n	"
+									+ property.getName() + " ENUM(" + enumeration.getOwnedLiterals().stream()
+											.map(x -> "\'" + x.getName() + "\'").collect(Collectors.joining(", "))
+									+ ")" + notNull;
+						} else {
+							// if not a primitive type nor an enumeration, we need to refer to
+							// another table with a foreign key
+							String referencedTable = property.getType().getName().toUpperCase();
+							String foreignKeyName = property.getType().getName().substring(0, 1).toLowerCase()
+									+ property.getType().getName().substring(1) + "_id";
+
+							ddl += ",\n	" + property.getName() + " INT" + notNull;
+							constraints += ",\n	CONSTRAINT FK_" + property.getName() + " FOREIGN KEY ("
+									+ property.getName() + ") REFERENCES " + referencedTable + "(" + foreignKeyName
+									+ ")";
+						}
+					}
+
+				}
+				ddl += constraints + "\n);\n";
+			}
+		}
+		return ddl;
+
+	}
+
+	/**
 	 * Checks whether class is a sortal non-kind.
 	 * 
 	 * @param c the class to be checked
 	 * @return true is class is a sortal non-kind, false otherwise
 	 */
 	private static boolean isSortalNonKind(Class c) {
+		if (c.getAppliedStereotypes().size()==0) return false;
+		
 		Stereotype s = c.getAppliedStereotypes().get(0);
 		if (s == null)
 			return false;
@@ -110,12 +205,33 @@ public class TransformationMain {
 	}
 
 	/**
+	 * Checks whether class is a kind.
+	 * 
+	 * @param c the class to be checked
+	 * @return true is class is a kind, false otherwise
+	 */
+	private static boolean isKind(Class c) {
+		if (c.getAppliedStereotypes().size()==0) return false;
+		
+		Stereotype s = c.getAppliedStereotypes().get(0);
+		if (s == null)
+			return false;
+		else
+			return s.getName().equals("kind") || 
+					s.getName().equals("relator") ||
+					s.getName().equals("mode") ||
+					s.getName().equals("quality");
+	}
+
+
+	/**
 	 * Checks whether class is a non-sortal.
 	 * 
 	 * @param c the class to be checked
 	 * @return true is class is a non-sortal, false otherwise
 	 */
 	private static boolean isNonSortal(Class c) {
+		if (c.getAppliedStereotypes().size()==0) return false;
 		Stereotype s = c.getAppliedStereotypes().get(0);
 		if (s == null)
 			return false;
@@ -124,7 +240,6 @@ public class TransformationMain {
 					|| s.getName().equals("mixin");
 	}
 
-	
 	/**
 	 * Finds a leaf sortal (non-kind) in a package.
 	 * 
@@ -142,7 +257,6 @@ public class TransformationMain {
 		}
 		return null;
 	}
-
 
 	/**
 	 * Finds a top-level non-sortal in a package.
@@ -185,13 +299,15 @@ public class TransformationMain {
 	 * @param c the UML class to be lifted
 	 */
 	public static void liftClass(Package p, org.eclipse.uml2.uml.Class c) {
+		
+		// FIXME: does not address name classes in attributes and association ends
 
 		Set<Generalization> generalizationsToDestroy = new HashSet<>();
 		for (Generalization g : c.getGeneralizations()) {
 
 			if (g.getGeneral() instanceof Class) {
 				generalizationsToDestroy.add(g);
-				
+
 				Class superclass = (Class) g.getGeneral();
 
 				System.out.println("Lifting class " + c.getName() + " to " + superclass.getName());
@@ -200,71 +316,59 @@ public class TransformationMain {
 				Set<Property> propertiesToDestroy = new HashSet<>();
 				for (Property property : c.getOwnedAttributes()) {
 
-					// ignore attributes that are parts of associations
-					if (property.getOtherEnd()==null) {
+					// ignore attributes that are parts of associations, they will be processed later
+					if (property.getOtherEnd() == null) {
 						if (superclass.getAttribute(property.getName(), property.getType()) == null)
-							superclass.createOwnedAttribute(property.getName(), property.getType(), 0, property.getUpper());					
+							superclass.createOwnedAttribute(property.getName(), property.getType(), 0,
+									property.getUpper());
 					}
 				}
-				for (Property prop : propertiesToDestroy) prop.destroy();
-				
+				for (Property prop : propertiesToDestroy)
+					prop.destroy();
+
 				// associations are processed
 				Set<Association> associationsToDestroy = new HashSet<>();
 				for (Association a : c.getAssociations()) {
 					associationsToDestroy.add(a);
-					
+
 					// FIXME: check if association already exists
-					// check if works for self-relationships
-					if (a.getMemberEnds().get(1).getType().equals(c)) 
-					{
-						// if end 1 is the class being lifted, then we need to create the copy in the superclass
+					// FIXME: treat self-relationships as a special case
+					if (a.getMemberEnds().get(1).getType().equals(c)) {
+						// if end 1 is the class being lifted, then we need to create the copy in the
+						// superclass
 						// end 0 is the opposite end, which receives optional cardinality
-						Association createdAssociation=superclass.createAssociation(
-						a.getMemberEnds().get(0).isNavigable(),
-						a.getMemberEnds().get(0).getAggregation(), 
-						a.getMemberEnds().get(0).getName(), 
-						0,
-						a.getMemberEnds().get(0).getUpper(),
-						a.getMemberEnds().get(0).getType(),
-						a.getMemberEnds().get(1).isNavigable(),
-						a.getMemberEnds().get(1).getAggregation(),
-						a.getMemberEnds().get(1).getName(), 
-						a.getMemberEnds().get(1).getLower(),
-						a.getMemberEnds().get(1).getUpper());
+						Association createdAssociation = superclass.createAssociation(
+								a.getMemberEnds().get(0).isNavigable(), a.getMemberEnds().get(0).getAggregation(),
+								a.getMemberEnds().get(0).getName(), 0, a.getMemberEnds().get(0).getUpper(),
+								a.getMemberEnds().get(0).getType(), a.getMemberEnds().get(1).isNavigable(),
+								a.getMemberEnds().get(1).getAggregation(), a.getMemberEnds().get(1).getName(),
+								a.getMemberEnds().get(1).getLower(), a.getMemberEnds().get(1).getUpper());
 						createdAssociation.setName(a.getName());
 					} else
-						// 
-						if (a.getMemberEnds().get(0).getType().equals(c)) {
-							// if end 0 is the class being lifted, then we need to create the copy in the 
-							// other class involved in the association (the type of end 1)
-							// end 1 is the opposite end, which receives optional cardinality
-							Association createdAssociation=a.getMemberEnds().get(1).getType().createAssociation(							
-									a.getMemberEnds().get(0).isNavigable(),
-									a.getMemberEnds().get(0).getAggregation(), 
-									a.getMemberEnds().get(0).getName(), 
-									a.getMemberEnds().get(0).getLower(),
-									a.getMemberEnds().get(0).getUpper(),
-									superclass,
-									a.getMemberEnds().get(1).isNavigable(),
-									a.getMemberEnds().get(1).getAggregation(),
-									a.getMemberEnds().get(1).getName(), 
-									0,
-									a.getMemberEnds().get(1).getUpper());
-									createdAssociation.setName(a.getName());							
-						}
-					
-					
+					//
+					if (a.getMemberEnds().get(0).getType().equals(c)) {
+						// if end 0 is the class being lifted, then we need to create the copy in the
+						// other class involved in the association (the type of end 1)
+						// end 1 is the opposite end, which receives optional cardinality
+						Association createdAssociation = a.getMemberEnds().get(1).getType().createAssociation(
+								a.getMemberEnds().get(0).isNavigable(), a.getMemberEnds().get(0).getAggregation(),
+								a.getMemberEnds().get(0).getName(), a.getMemberEnds().get(0).getLower(),
+								a.getMemberEnds().get(0).getUpper(), superclass, a.getMemberEnds().get(1).isNavigable(),
+								a.getMemberEnds().get(1).getAggregation(), a.getMemberEnds().get(1).getName(), 0,
+								a.getMemberEnds().get(1).getUpper());
+						createdAssociation.setName(a.getName());
+					}
+
 				}
 				for (Association a : associationsToDestroy) {
 					a.getMemberEnds().get(0).destroy();
 					a.getMemberEnds().get(0).destroy();
 					a.destroy();
 				}
-				
 
 				if (g.getGeneralizationSets().size() > 0) {
 					// case involves a generalization set, and we need to create discriminator
-					Set<GeneralizationSet> toDestroy=new HashSet<>();
+					Set<GeneralizationSet> toDestroy = new HashSet<>();
 					for (GeneralizationSet gs : g.getGeneralizationSets()) {
 						String enumname = gs.getName().substring(0, 1).toUpperCase() + gs.getName().substring(1)
 								+ "Enum";
@@ -276,11 +380,13 @@ public class TransformationMain {
 							}
 							superclass.createOwnedAttribute(gs.getName(), e, gs.isCovering() ? 1 : 0,
 									gs.isDisjoint() ? 1 : -1);
-						
+
 						}
 						toDestroy.add(gs);
 					}
-					for (GeneralizationSet gs : toDestroy) { gs.destroy(); }
+					for (GeneralizationSet gs : toDestroy) {
+						gs.destroy();
+					}
 
 				} else {
 					// no genset, no discriminator, only boolean attribute
@@ -293,7 +399,9 @@ public class TransformationMain {
 				c.destroy();
 			}
 		}
-		for(Generalization g : generalizationsToDestroy) { g.destroy(); }
+		for (Generalization g : generalizationsToDestroy) {
+			g.destroy();
+		}
 	}
 
 	/**
@@ -316,79 +424,102 @@ public class TransformationMain {
 	 * @param c the UML class to be flattened
 	 */
 	public static void flattenClass(Package p, org.eclipse.uml2.uml.Class c) {
+		
+		// FIXME: does not address name classes in attributes and association ends
+
+		Set<Generalization> toDestroy = new HashSet<>();
+		Set<GeneralizationSet> gensetstoDestroy = new HashSet<>();
+		Set<Association> associationsToDestroy = new HashSet<>();
+
+		
 		for (Class subclass : getSubClasses(p, c)) {
-			System.out.println("Flattening class " + c.getName()+" to "+subclass.getName());
-			
+			System.out.println("Flattening class " + c.getName() + " to " + subclass.getName());
+
 			// attributes are copied
 			for (Property property : c.getAttributes()) {
 				// ignore attributes that are parts of associations
-				if (property.getOtherEnd()==null) {
-				if (subclass.getAttribute(property.getName(), property.getType()) == null)
-					subclass.createOwnedAttribute(property.getName(), property.getType(), property.getLower(),
-							property.getUpper());
-				}				
+				if (property.getOtherEnd() == null) {
+					if (subclass.getAttribute(property.getName(), property.getType()) == null)
+						subclass.createOwnedAttribute(property.getName(), property.getType(), property.getLower(),
+								property.getUpper());
+				}
 			}
-			
+
 			// associations are processed
-			Set<Association> associationsToDestroy = new HashSet<>();
 			for (Association a : c.getAssociations()) {
 				associationsToDestroy.add(a);
-							
-				// FIXME: check if association already exists
+
+				// FIXME: check if association already exists (because of "diamond")
+				
+				// FIXME: check is name clash occurs 
+				
 				// check if works for self-relationships
-				if (a.getMemberEnds().get(1).getType().equals(c)) 
-				{
-					// if end 1 is the class being flattened, then we need to create the copy in the subclass
+				if (a.getMemberEnds().get(1).getType().equals(c)) {
+					// if end 1 is the class being flattened, then we need to create the copy in the
+					// subclass
 					// end 1 receives optional cardinality
-					Association createdAssociation=subclass.createAssociation(
-					a.getMemberEnds().get(0).isNavigable(),
-					a.getMemberEnds().get(0).getAggregation(), 
-					a.getMemberEnds().get(0).getName(), 
-					a.getMemberEnds().get(0).getLower(),
-					a.getMemberEnds().get(0).getUpper(),
-					a.getMemberEnds().get(0).getType(),
-					a.getMemberEnds().get(1).isNavigable(),
-					a.getMemberEnds().get(1).getAggregation(),
-					a.getMemberEnds().get(1).getName(), 
-					0,
-					a.getMemberEnds().get(1).getUpper());
+					Association createdAssociation = subclass.createAssociation(a.getMemberEnds().get(0).isNavigable(),
+							a.getMemberEnds().get(0).getAggregation(), 
+							a.getMemberEnds().get(0).getName(),  
+							a.getMemberEnds().get(0).getLower(), 
+							a.getMemberEnds().get(0).getUpper(),
+							a.getMemberEnds().get(0).getType(), 
+							a.getMemberEnds().get(1).isNavigable(),
+							a.getMemberEnds().get(1).getAggregation(), 
+							a.getMemberEnds().get(1).getName()+"_"+subclass.getName(),  // prevents name clash
+							0,
+							a.getMemberEnds().get(1).getUpper());
 					createdAssociation.setName(a.getName());
 				} else
-					// 
-					if (a.getMemberEnds().get(0).getType().equals(c)) {
-						// if end 0 is the class being flattened, then we need to create the copy in the 
-						// other class involved in the association (the type of end 1)
-						// end 0 receives optional cardinality
-						Association createdAssociation=a.getMemberEnds().get(1).getType().createAssociation(							
-								a.getMemberEnds().get(0).isNavigable(),
-								a.getMemberEnds().get(0).getAggregation(), 
-								a.getMemberEnds().get(0).getName(), 
-								0,
-								a.getMemberEnds().get(0).getUpper(),
-								subclass,
-								a.getMemberEnds().get(1).isNavigable(),
-								a.getMemberEnds().get(1).getAggregation(),
-								a.getMemberEnds().get(1).getName(), 
-								a.getMemberEnds().get(1).getLower(),
-								a.getMemberEnds().get(1).getUpper());
-								createdAssociation.setName(a.getName());							
-					}
-			}
-			for (Association a : associationsToDestroy) {
-				a.getMemberEnds().get(0).destroy();
-				a.getMemberEnds().get(0).destroy();
-				a.destroy();
+				//
+				if (a.getMemberEnds().get(0).getType().equals(c)) {
+					// if end 0 is the class being flattened, then we need to create the copy in the
+					// other class involved in the association (the type of end 1)
+					// end 0 receives optional cardinality
+					Association createdAssociation = a.getMemberEnds().get(1).getType().createAssociation(
+							a.getMemberEnds().get(0).isNavigable(), 
+							a.getMemberEnds().get(0).getAggregation(),
+							a.getMemberEnds().get(0).getName()+"_"+subclass.getName(), // prevents name clash
+							0, 
+							a.getMemberEnds().get(0).getUpper(), 
+							subclass,
+							a.getMemberEnds().get(1).isNavigable(), 
+							a.getMemberEnds().get(1).getAggregation(),
+							a.getMemberEnds().get(1).getName(), 
+							a.getMemberEnds().get(1).getLower(),
+							a.getMemberEnds().get(1).getUpper());
+					createdAssociation.setName(a.getName());
+				}
 			}
 			
-			// now let's destroy the generalizations that point to this class
-			// FIXME: if there are generalization sets, they must also be destroyed
-			Set<Generalization> toDestroy=new HashSet<>();
-			for (Generalization g : subclass.getGeneralizations()) 
-			{
-				if (g.getGeneral().equals(c)) { toDestroy.add(g); } 
+
+			for (Generalization g : subclass.getGeneralizations()) {
+				if (g.getGeneral().equals(c)) {
+					toDestroy.add(g);
+					gensetstoDestroy.addAll(g.getGeneralizationSets());					
+				}
 			}
-			for (Generalization g : toDestroy) { g.destroy(); }
+
 		}
+		// after processing all subclasses	
+		
+		// destroy associations
+		for (Association a : associationsToDestroy) {
+			a.getMemberEnds().get(0).destroy();
+			a.getMemberEnds().get(0).destroy();
+			a.destroy();
+		}
+
+		// now let's destroy the generalizations that point to this class 
+		// and any generalization sets that may be involved
+		for (Generalization g : toDestroy) {
+			g.destroy();
+		}
+		for (GeneralizationSet gs : gensetstoDestroy)
+		{
+			gs.destroy();
+		}
+		
 		// and then the flattened class can be destroyed
 		c.destroy();
 	}

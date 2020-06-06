@@ -1,6 +1,6 @@
 # A Transformation from OntoUML into Relational Schemas
 
-This project includes a transformation from OntoUML source model into a target model ready for final transformation into a relational schema.
+This project includes a transformation from OntoUML source model into a target model ready for final transformation into a relational schema. A DDL specification is produced.
 
 The one table per kind approach is used; all non-sortals are flattened to kinds, and sortals lifted to kinds. A forthcoming publication describing the approach is planned.
 
