@@ -150,6 +150,7 @@ public class TransformationMain {
 					// because if upper bound == -1, the column should be in the referenced table
 					if (property.getUpper() == -1)
 						continue;
+					//FIXME: deal with overlapping gensets
 
 					String name = property.getName();
 					String notNull = (property.getLower() == 0) ? " NULL" : " NOT NULL";
