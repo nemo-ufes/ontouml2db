@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:ontouml2enduranttypesprofile="http:///schemas/ontouml2enduranttypesprofile/_N-UrAJrCEeqBdPgBOS67lA/114" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xsi:schemaLocation="http:///schemas/ontouml2enduranttypesprofile/_N-UrAJrCEeqBdPgBOS67lA/114 ontouml2enduranttypes.profile.uml#_N-VSEJrCEeqBdPgBOS67lA">
+  <uml:Model xmi:id="_xg4IEMREEequddT5sX7vJg" name="Test_11">
+    <packageImport xmi:type="uml:PackageImport" xmi:id="_xh9tMMREEequddT5sX7vJg">
+      <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+    </packageImport>
+    <packagedElement xmi:type="uml:Class" xmi:id="_0dm-8MREEequddT5sX7vJg" name="NamedEntity">
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_GSbEYMRFEequddT5sX7vJg" name="name">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+      </ownedAttribute>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_2kTlsMREEequddT5sX7vJg" name="OrganizationA">
+      <generalization xmi:type="uml:Generalization" xmi:id="_SGTiIMRFEequddT5sX7vJg" general="_0dm-8MREEequddT5sX7vJg"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_9abI8MREEequddT5sX7vJg" name="OrganizationC">
+      <generalization xmi:type="uml:Generalization" xmi:id="_TCoAcMRFEequddT5sX7vJg" general="_0dm-8MREEequddT5sX7vJg" generalizationSet="_tVB9QMRFEequddT5sX7vJg"/>
+      <ownedAttribute xmi:type="uml:Property" xmi:id="_Jqt14MRFEequddT5sX7vJg" name="address">
+        <type xmi:type="uml:PrimitiveType" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#String"/>
+      </ownedAttribute>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_WrEt0MRFEequddT5sX7vJg" name="Test"/>
+    <packagedElement xmi:type="uml:Association" xmi:id="_aFUnIMRFEequddT5sX7vJg" memberEnd="_aFUnI8RFEequddT5sX7vJg _aFUnJMRFEequddT5sX7vJg">
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_aFUnIcRFEequddT5sX7vJg" source="org.eclipse.papyrus">
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_aFUnIsRFEequddT5sX7vJg" key="nature" value="UML_Nature"/>
+      </eAnnotations>
+      <ownedEnd xmi:type="uml:Property" xmi:id="_aFUnI8RFEequddT5sX7vJg" name="test" type="_WrEt0MRFEequddT5sX7vJg" association="_aFUnIMRFEequddT5sX7vJg">
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="_dYCVEMRFEequddT5sX7vJg"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_dYOiUMRFEequddT5sX7vJg" value="*"/>
+      </ownedEnd>
+      <ownedEnd xmi:type="uml:Property" xmi:id="_aFUnJMRFEequddT5sX7vJg" name="namedentity" type="_0dm-8MREEequddT5sX7vJg" association="_aFUnIMRFEequddT5sX7vJg"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:GeneralizationSet" xmi:id="_tVB9QMRFEequddT5sX7vJg" name="NamedType" isCovering="true" isDisjoint="true" generalization="_TCoAcMRFEequddT5sX7vJg _MMRDQMReEequddT5sX7vJg _NJguoMReEequddT5sX7vJg"/>
+    <packagedElement xmi:type="uml:Class" xmi:id="_G7g7UMReEequddT5sX7vJg" name="OrganizationD">
+      <generalization xmi:type="uml:Generalization" xmi:id="_MMRDQMReEequddT5sX7vJg" general="_0dm-8MREEequddT5sX7vJg" generalizationSet="_tVB9QMRFEequddT5sX7vJg"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_ISrikMReEequddT5sX7vJg" name="OrganizationE">
+      <generalization xmi:type="uml:Generalization" xmi:id="_NJguoMReEequddT5sX7vJg" general="_0dm-8MREEequddT5sX7vJg" generalizationSet="_tVB9QMRFEequddT5sX7vJg"/>
+    </packagedElement>
+    <profileApplication xmi:type="uml:ProfileApplication" xmi:id="_DhnwsMRFEequddT5sX7vJg">
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_DmdNYMRFEequddT5sX7vJg" source="PapyrusVersion">
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_DmdNYcRFEequddT5sX7vJg" key="Version" value="0.2.1"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_DmdNYsRFEequddT5sX7vJg" key="Comment" value=""/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_DmdNY8RFEequddT5sX7vJg" key="Copyright" value="João Paulo A. Almeida, Claudenir M. Fonseca, Giancarlo Guizzardo, Tiago P. Sales (2020)&#xA;MIT License"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_DmdNZMRFEequddT5sX7vJg" key="Date" value="2020-05-20"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_DmdNZcRFEequddT5sX7vJg" key="Author" value="João Paulo A. Almeida, Claudenir M. Fonseca, Giancarlo Guizzardo, Tiago P. Sales "/>
+      </eAnnotations>
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_Dht3UMRFEequddT5sX7vJg" source="http://www.eclipse.org/uml2/2.0.0/UML">
+        <references xmi:type="ecore:EPackage" href="ontouml2enduranttypes.profile.uml#_N-VSEJrCEeqBdPgBOS67lA"/>
+      </eAnnotations>
+      <appliedProfile xmi:type="uml:Profile" href="ontouml2enduranttypes.profile.uml#_qyOmQJk4Eeq7vPF5V6OkQA"/>
+    </profileApplication>
+  </uml:Model>
+  <ontouml2enduranttypesprofile:category xmi:id="_MEES4MRFEequddT5sX7vJg" base_Class="_0dm-8MREEequddT5sX7vJg"/>
+  <ontouml2enduranttypesprofile:kind xmi:id="_NA0PAMRFEequddT5sX7vJg" base_Class="_2kTlsMREEequddT5sX7vJg"/>
+  <ontouml2enduranttypesprofile:kind xmi:id="_PMVrYMRFEequddT5sX7vJg" base_Class="_9abI8MREEequddT5sX7vJg"/>
+  <ontouml2enduranttypesprofile:kind xmi:id="_bVkuEMRFEequddT5sX7vJg" base_Class="_WrEt0MRFEequddT5sX7vJg"/>
+  <ontouml2enduranttypesprofile:kind xmi:id="_KWje0MReEequddT5sX7vJg" base_Class="_G7g7UMReEequddT5sX7vJg"/>
+  <ontouml2enduranttypesprofile:kind xmi:id="_LMfoUMReEequddT5sX7vJg" base_Class="_ISrikMReEequddT5sX7vJg"/>
+</xmi:XMI>
