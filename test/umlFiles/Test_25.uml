@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmi:version="20131001" xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:ontouml2enduranttypesprofile="http:///schemas/ontouml2enduranttypesprofile/_N-UrAJrCEeqBdPgBOS67lA/114" xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xsi:schemaLocation="http:///schemas/ontouml2enduranttypesprofile/_N-UrAJrCEeqBdPgBOS67lA/114 ontouml2enduranttypes.profile.uml#_N-VSEJrCEeqBdPgBOS67lA">
+  <uml:Model xmi:id="_C75mEMVZEeqDMorBnHxKTg" name="Test_25">
+    <packageImport xmi:type="uml:PackageImport" xmi:id="_C_MKoMVZEeqDMorBnHxKTg">
+      <importedPackage xmi:type="uml:Model" href="pathmap://UML_LIBRARIES/UMLPrimitiveTypes.library.uml#_0"/>
+    </packageImport>
+    <packagedElement xmi:type="uml:Class" xmi:id="_FLgRMMVZEeqDMorBnHxKTg" name="SuperClass"/>
+    <packagedElement xmi:type="uml:Class" xmi:id="_Aj8v4MVcEeqDMorBnHxKTg" name="SubClass1">
+      <generalization xmi:type="uml:Generalization" xmi:id="_KzV8EMVcEeqDMorBnHxKTg" general="_FLgRMMVZEeqDMorBnHxKTg" generalizationSet="_Li7l8MVcEeqDMorBnHxKTg"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_B6Y-YMVcEeqDMorBnHxKTg" name="SubClass2">
+      <generalization xmi:type="uml:Generalization" xmi:id="_KQnCcMVcEeqDMorBnHxKTg" general="_FLgRMMVZEeqDMorBnHxKTg" generalizationSet="_Li7l8MVcEeqDMorBnHxKTg"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Class" xmi:id="_DC760MVcEeqDMorBnHxKTg" name="AssociatedClass"/>
+    <packagedElement xmi:type="uml:GeneralizationSet" xmi:id="_Li7l8MVcEeqDMorBnHxKTg" name="SuperClassType" generalization="_KzV8EMVcEeqDMorBnHxKTg _KQnCcMVcEeqDMorBnHxKTg"/>
+    <packagedElement xmi:type="uml:Association" xmi:id="_Nfk40MVcEeqDMorBnHxKTg" memberEnd="_Nflf4sVcEeqDMorBnHxKTg _NfmG8MVcEeqDMorBnHxKTg">
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_Nflf4MVcEeqDMorBnHxKTg" source="org.eclipse.papyrus">
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_Nflf4cVcEeqDMorBnHxKTg" key="nature" value="UML_Nature"/>
+      </eAnnotations>
+      <ownedEnd xmi:type="uml:Property" xmi:id="_Nflf4sVcEeqDMorBnHxKTg" name="associatedclass" type="_DC760MVcEeqDMorBnHxKTg" association="_Nfk40MVcEeqDMorBnHxKTg">
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="_PioVsMVcEeqDMorBnHxKTg" value="*"/>
+      </ownedEnd>
+      <ownedEnd xmi:type="uml:Property" xmi:id="_NfmG8MVcEeqDMorBnHxKTg" name="subclass2" type="_B6Y-YMVcEeqDMorBnHxKTg" association="_Nfk40MVcEeqDMorBnHxKTg"/>
+    </packagedElement>
+    <profileApplication xmi:type="uml:ProfileApplication" xmi:id="_GWPeoMVcEeqDMorBnHxKTg">
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_GfBnMMVcEeqDMorBnHxKTg" source="PapyrusVersion">
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_GfBnMcVcEeqDMorBnHxKTg" key="Version" value="0.2.1"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_GfBnMsVcEeqDMorBnHxKTg" key="Comment" value=""/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_GfBnM8VcEeqDMorBnHxKTg" key="Copyright" value="João Paulo A. Almeida, Claudenir M. Fonseca, Giancarlo Guizzardo, Tiago P. Sales (2020)&#xA;MIT License"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_GfBnNMVcEeqDMorBnHxKTg" key="Date" value="2020-05-20"/>
+        <details xmi:type="ecore:EStringToStringMapEntry" xmi:id="_GfBnNcVcEeqDMorBnHxKTg" key="Author" value="João Paulo A. Almeida, Claudenir M. Fonseca, Giancarlo Guizzardo, Tiago P. Sales "/>
+      </eAnnotations>
+      <eAnnotations xmi:type="ecore:EAnnotation" xmi:id="_GWQswMVcEeqDMorBnHxKTg" source="http://www.eclipse.org/uml2/2.0.0/UML">
+        <references xmi:type="ecore:EPackage" href="ontouml2enduranttypes.profile.uml#_N-VSEJrCEeqBdPgBOS67lA"/>
+      </eAnnotations>
+      <appliedProfile xmi:type="uml:Profile" href="ontouml2enduranttypes.profile.uml#_qyOmQJk4Eeq7vPF5V6OkQA"/>
+    </profileApplication>
+  </uml:Model>
+  <ontouml2enduranttypesprofile:kind xmi:id="_HbSbIMVcEeqDMorBnHxKTg" base_Class="_FLgRMMVZEeqDMorBnHxKTg"/>
+  <ontouml2enduranttypesprofile:role xmi:id="_IHeywMVcEeqDMorBnHxKTg" base_Class="_Aj8v4MVcEeqDMorBnHxKTg"/>
+  <ontouml2enduranttypesprofile:role xmi:id="_I30qkMVcEeqDMorBnHxKTg" base_Class="_B6Y-YMVcEeqDMorBnHxKTg"/>
+  <ontouml2enduranttypesprofile:relator xmi:id="_JdRhAMVcEeqDMorBnHxKTg" base_Class="_DC760MVcEeqDMorBnHxKTg"/>
+</xmi:XMI>
